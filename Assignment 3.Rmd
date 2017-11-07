@@ -1,0 +1,82 @@
+---
+title: "Assignment 3_LU HAN"
+author: "Lu Han"
+date: "2017年11月7日"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+######PART 1
+install.packages("ggplot2") 
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+
+K2 <- dplyr::select(K1, 2:6)
+
+K3 <- na.omit(K2)
+K3 <- scale(K3)
+fit <- kmeans(K3, 2)
+fit$cluster
+
+K4 <- data.frame(K3, fit$cluster)
+names(K4) <- c("1", "2", "3", "4", "5", "cluster")
+
+K5 <- tidyr::gather(K4, "week", "motivation", 1:5)
+
+K6 <- K5 %>% group_by(week, cluster)
+K6 <- summarise(K6, avg = mean(motivation))
+
+K6$week <- as.numeric(K6$week)
+K6$cluster <- as.factor(K6$cluster)
+
+ggplot(K6, aes(week, avg, colour = cluster)) + geom_line() + xlab("Week") + ylab("Average Motivation")
+
+K7 <- dplyr::count(K4, cluster)
+
+
+######PART 2
+K1 <- read.csv("C:/Users/owner/Desktop/assignment-3-lh2587-master/cluster-class-data.csv")
+K2 <- dplyr::select(K1, 4:16)
+
+install.packages("ggmap")
+library(ggmap)
+
+K2$ip = paste(K2$QID14_TEXT,'', K2$QID16_TEXT,'', K2$QID17_TEXT)
+df = data.frame(address = as.factor(K2$ip), stringsAsFactors = FALSE)
+df$address = as.character(df$address)
+lon.lat = geocode(df$address)
+
+K2$QID3 = ifelse(K2$QID3=='Yes', 1, 0)
+K2$QID4 = ifelse(K2$QID4=='g-iff', 1, 0)
+
+K2 = cbind(K2, lon.lat)
+K2$QID14_TEXT = K2$QID16_TEXT = K2$QID17_TEXT = K2$ip = NULL
+K2 = na.omit(K2)
+K2 = scale(K2)
+names(K2) = c("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12") 
+
+K2.pref = K2[,1:10]
+fit.pref = kmeans(K2.pref, 2) 
+fit.pref$cluster
+K3.pref = data.frame(K2.pref, fit.pref$cluster)
+names(K3.pref) = c("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "cluster") 
+
+K4.pref = dplyr::count(K3.pref, cluster)
+
+K2.loc = K2[,11:12]
+fit.loc = kmeans(K2.loc, 2) 
+fit.loc$cluster
+K3.loc = data.frame(K2.loc, fit.loc$cluster)
+names(K3.loc) = c("lon", "lat", "cluster") 
+
+K4.loc = dplyr::count(K3.loc, cluster)
+
+
+######PART 3
+vis = cbind(K3.loc, fit.pref$cluster)
+names(vis) = c("lon", "lat", "cluster", "Preference") 
+vis$Preference = as.character(vis$Preference)
+
+ggplot(vis, aes(lon, lat, colour = Preference)) + geom_point() + xlab("Longitude") + ylab("Latitude") 
+```
